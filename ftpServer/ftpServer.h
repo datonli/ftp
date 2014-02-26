@@ -8,7 +8,8 @@
 #include <fcntl.h>
 
 #define MAXLEN 1024
-#define SERVERPORT 8000
+#define SERVERPORT 8010
+#define MAXORDER 32
 
 
 

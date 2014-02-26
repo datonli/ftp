@@ -7,54 +7,114 @@
  * */
 
 #include "ftpServer.h"
-
+char * serverport;
 int main(int argc,char * argv[])
 {
-        int sockfd,newsockfd,fd;
+        int sockfd,newsockfd,fd,datasockfd;
+	int recvnumbytes = -1;
+	int pipefd[2];
         char sendmsg[MAXLEN];
         char getmsg[MAXLEN];
         struct sockaddr_in serveraddr;
         struct sockaddr_in clientaddr;
         int clientport,sockaddrlen;
-	
+	serverport = argv[1];	
 	sockfd = listen2client(sockfd,clientaddr,serveraddr);
 	
 	printf("listenning...\n");
 	
-LOOP:   if((newsockfd = accept(sockfd,(struct sockaddr *)&clientaddr,&sockaddrlen)) != -1)
+        if((newsockfd = accept(sockfd,(struct sockaddr *)&clientaddr,&sockaddrlen)) != -1)
         {
+		if(pipe(pipefd) < 0)
+		{
+			printf("pipe error");
+		}
                 printf("new socket fd is : %d \n ",newsockfd);
 		char * clientipaddr = inet_ntoa(clientaddr.sin_addr.s_addr);
 		printf("client IP is : %s \n",clientipaddr);
                 int pid;
                 if((pid = fork()) > 0)
                 {
-                        goto LOOP;
+			
+                        if((recvnumbytes = recv(newsockfd , getmsg, MAXLEN, 0)) == -1)
+                        {
+                                printf("recv msg error\n");
+                        	exit(0);
+			}
+			
+        		printf("recv done\ngetmsg is : %s\n",getmsg);                
+			close(pipefd[0]);
+			int num = write(pipefd[1],getmsg,strlen(getmsg)+1);
+			printf("num is %d\n",num);
                 }
                 else if(pid == 0)
                 {
-                         int recvnumbytes ;
+			char ordermsg[MAXORDER];
+                        /* int recvnumbytes ;
                          if((recvnumbytes = recv(newsockfd , getmsg, MAXLEN, 0)) == -1)
                          {
                                  printf("recv msg error\n");
                          }
                          else
-                         {
+                         {**/
+		//	printf("sleep 10 seconds\n");
+			sleep(5);      //等待接收了getmsg之后再进行触发！
+		//	printf("sleep over\n");
+			 while(1){
+			//	if(recvnumbytes != -1){	
 				char preordermsg[4];
-				char *ordermsg = getmsg;
-		                for(int i = 0; i <= 2; i++)
+				//char *ordermsg = getmsg;
+				close(pipefd[1]);
+				int num = read(pipefd[0],getmsg,MAXORDER);
+		
+				//printf("num is %d\n",num);
+			if(strcmp(getmsg,ordermsg) != 0)
+			{
+				//ordermsg = getmsg;
+		                for(int i = 0 ; i <= strlen(getmsg)-1; i++)
+					ordermsg[i] = getmsg[i];
+				ordermsg[strlen(getmsg)] = '\0';
+				for(int i = 0; i <= 2; i++)
                 		        preordermsg[i] = ordermsg[i];
                 		preordermsg[3] = '\0';
 				printf("msg is %s \n",ordermsg);
-				sleep(5);
 				if(strcmp(preordermsg,"PRT") == 0)
 		                {
                 		//	char * port = getusefulmsg(ordermsg);
-					newsockfd = connect2client(newsockfd,clientaddr,clientipaddr,ordermsg);						
+					datasockfd = connect2client(newsockfd,clientaddr,clientipaddr,ordermsg);						
 					printf("PRT already done\n");
 				}
 		                else if(strcmp(preordermsg,"DIR") == 0)
                 		{
+					int status;
+					if((status = system("dir > systemp.txt")) == -1)
+					{
+						printf("dir error\n");
+						exit(0);
+					}		
+					if((fd = open("./systemp.txt",O_RDONLY)) == -1)
+				        {
+				                printf("open file failed!\n");
+				                exit(0);
+				        }       
+				        if((status = read(fd,sendmsg,MAXLEN)) == -1)
+				        {		
+				                printf("read file failed!\n");
+				                exit(0);
+				        }
+				        printf("readbytenum is : %d \n",status);
+				        if( send(newsockfd,sendmsg,strlen(sendmsg),0) < 0)
+				        {
+				                printf("send failed");
+				                exit(0);
+				        }
+				        printf("send msg is : %s \n",sendmsg);  
+					close(fd);
+					if((status = system("rm -rf systemp.txt")) == -1)
+					{
+						printf("rm temp failed\n");
+						exit(0);
+					}
 					
                 		}	
 		                else if(strcmp(preordermsg,"GET") == 0)
@@ -69,7 +129,7 @@ LOOP:   if((newsockfd = accept(sockfd,(struct sockaddr *)&clientaddr,&sockaddrle
                 		{
 		                        printf("Wrong order!\n");
 				}
-
+				recvnumbytes = -1;
                                 /*
 				getmsg[recvnumbytes] = '/0';
                                 printf("recvnumbytes is %d ,\nrecvmsg is : %s \n",recvnumbytes,getmsg);
@@ -87,9 +147,9 @@ LOOP:   if((newsockfd = accept(sockfd,(struct sockaddr *)&clientaddr,&sockaddrle
                                 printf("writenumbytes is : %d\n",writenumbytes);
                                 close(fd);
 				**/
-
+		//	}
+			}
                         }
-
                 }
                 else
                 {
@@ -146,7 +206,8 @@ int listen2client(int sockfd ,struct sockaddr_in clientaddr, struct sockaddr_in 
 
         bzero(&clientaddr,sizeof(struct sockaddr));
         serveraddr.sin_family = AF_INET;
-        serveraddr.sin_port = htons(SERVERPORT);
+        //serveraddr.sin_port = htons(SERVERPORT);
+        serveraddr.sin_port = htons(atoi(serverport));
         serveraddr.sin_addr.s_addr = INADDR_ANY;
 
         if(bind(sockfd,(struct sockaddr*)&serveraddr,sizeof(struct sockaddr )) < 0)
