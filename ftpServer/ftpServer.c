@@ -12,7 +12,6 @@ int main(int argc,char * argv[])
 {
         int sockfd,newsockfd,fd,datasockfd;
 	int recvnumbytes = -1;
-	int pipefd[2];
         char sendmsg[MAXLEN];
         char getmsg[MAXLEN];
         struct sockaddr_in serveraddr;
@@ -44,6 +43,8 @@ LOOP_RECV:              if((recvnumbytes = recv(newsockfd , getmsg, MAXLEN, 0)) 
                                  printf("recv msg error\n");
 				 goto LOOP_RECV;
                         }
+			
+			//由于接收到的信息是类似于：PRT8000这样的格式的，所以需要对这些字符串进行一些处理之后才能够使用！！！	
 			char preordermsg[4];
 			ordermsg = getmsg;
 			for(int i = 0; i <= 2; i++)
@@ -59,6 +60,19 @@ LOOP_RECV:              if((recvnumbytes = recv(newsockfd , getmsg, MAXLEN, 0)) 
 		        else if(strcmp(preordermsg,"DIR") == 0)
                 	{
 				int status;
+				/*int msglen = strlen(ordermsg) ;
+				char cdorder[MAXORDER] ;
+				//for(int i = 3; i <= msglen; i ++)
+				//	cdorder[i-3] = ordermsg[i];
+				ordermsg[0] = 'c';
+				ordermsg[1] = 'd';
+				ordermsg[2] = ' ';
+				if((status = system(ordermsg)) == -1)
+				{
+				        printf("dir error\n");
+                                        exit(0);
+				}
+				**/
 				if((status = system("dir > systemp.txt")) == -1)
 				{
 					printf("dir error\n");
@@ -75,7 +89,7 @@ LOOP_RECV:              if((recvnumbytes = recv(newsockfd , getmsg, MAXLEN, 0)) 
 			                exit(0);
 			        }
 			        printf("readbytenum is : %d \n",status);
-			        if( send(newsockfd,sendmsg,strlen(sendmsg),0) < 0)
+			        if( send(datasockfd,sendmsg,strlen(sendmsg),0) < 0)
 			        {
 			                printf("send failed");
 			                exit(0);
@@ -91,7 +105,32 @@ LOOP_RECV:              if((recvnumbytes = recv(newsockfd , getmsg, MAXLEN, 0)) 
                 	}	
 		        else if(strcmp(preordermsg,"GET") == 0)
                 	{
-
+				int status;
+				char arguemsg[MAXORDER];
+				for(int i = 0; i <= strlen(ordermsg)-3; i ++)
+                              		arguemsg[i] = ordermsg[i+3];
+				
+                              	printf("GET %s ... \n",arguemsg);
+				if((fd = open(arguemsg,O_RDONLY)) == -1)
+			        {
+			                printf("open file failed!\n");
+			                exit(0);
+			        }      
+				memset(sendmsg,0,strlen(sendmsg)+1); 
+			        if((status = read(fd,sendmsg,MAXLEN)) == -1)
+			        {
+			                printf("read file failed!\n");
+			                exit(0);
+			        }
+			        printf("readbytenum is : %d \n",status);
+			        if( send(datasockfd,sendmsg,strlen(sendmsg),0) < 0)
+			        {
+			                printf("send failed");
+			                exit(0);
+			        }
+			        printf("send msg is : %s \n",sendmsg);  
+				close(fd);	
+				goto LOOP_RECV;
                 	}
 		        else if(strcmp(preordermsg,"BYE") == 0)
                 	{
