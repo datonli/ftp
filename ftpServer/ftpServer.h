@@ -5,7 +5,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <fcntl.h>
+#include <strings.h>
+#include <string.h>
 
 #define MAXLEN 1024
 #define SERVERPORT 8010
