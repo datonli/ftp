@@ -16,6 +16,7 @@ int main(int argc,char * argv[])
         char sendmsg[MAXLEN];
         char recvmsg[MAXLEN];
 	char ordermsg[MAXORDER];
+	char arguemsg[MAXORDER];
 	serverport = argv[2];
 	if(argc != 3)
 	{
@@ -27,23 +28,27 @@ int main(int argc,char * argv[])
 	printf("Conneted.\n");
 LOOP:	printf("Please enter your order:\n");
 	printf("1.PRT port_number\n");
-        printf("2.DIR\n");
+        printf("2.DIR pathname\n");
         printf("3.GET filename\n");
-        printf("4.BYE\n");
+        printf("4.BYE BYE\n");
 	
 	while(bye != 1)
 	{	
-		scanf("%s",ordermsg);
-		sendmsg2server(ordersockfd,ordermsg);
-		char preordermsg[4] = {};
-		for(int i = 0; i <=2; i++)
-			preordermsg[i] = ordermsg[i];
-		preordermsg[3] = '\0';
-		if(strcmp(preordermsg,"PRT") == 0)
+		scanf("%s %s",ordermsg,arguemsg);
+		printf("ordermsg is : %s , arguemsg is %s\n",ordermsg,arguemsg);
+		int ordermsglen = strlen(ordermsg),arguemsglen = strlen(arguemsg);
+		char send2servermsg[ordermsglen + arguemsglen+1];
+		for(int i = 0; i <= ordermsglen -1 ; i ++)
+			send2servermsg[i] = ordermsg[i];
+		for(int i = 0; i <= arguemsglen - 1; i++)
+			send2servermsg[ordermsglen+i] = arguemsg[i];
+		send2servermsg[ordermsglen + arguemsglen] = '\0';
+		sendmsg2server(ordersockfd,send2servermsg);
+		if(strcmp(ordermsg,"PRT") == 0)
 		{
-			datasockfd = dealorderPRT(ordermsg);	
+			datasockfd = dealorderPRT(ordermsg,arguemsg);	
 		}
-		else if(strcmp(preordermsg,"DIR") == 0)
+		else if(strcmp(ordermsg,"DIR") == 0)
 		{
 			int recvnumbytes;
 			if((recvnumbytes = recv(ordersockfd , recvmsg, MAXLEN, 0)) == -1)
@@ -53,11 +58,11 @@ LOOP:	printf("Please enter your order:\n");
 		        }
 			printf("DIR is :\n%s\n",recvmsg);
 		}
-		else if(strcmp(preordermsg,"GET") == 0)
+		else if(strcmp(ordermsg,"GET") == 0)
 		{
 
 		}
-		else if(strcmp(preordermsg,"BYE") == 0)
+		else if(strcmp(ordermsg,"BYE") == 0)
 		{
 			//all close()
 			bye = 1;
@@ -91,7 +96,7 @@ void sendmsg2server(int sockfd,char * sendmsg)
 	3）链接成功的话，就完成了这一步了。这是开通一个专门用来传输数据的数据链路。
  *
  * */
-int dealorderPRT(char * msg)
+int dealorderPRT(char * msg,char * portmsg)
 {
 	int sockfd;
 	struct sockaddr_in serveraddr,clientaddr;
@@ -103,7 +108,7 @@ int dealorderPRT(char * msg)
 
         bzero(&clientaddr,sizeof(struct sockaddr));
         serveraddr.sin_family = AF_INET;
-	int port = atoi(msg+3);
+	int port = atoi(portmsg);
 	printf("port is %d\n",port);
 	serveraddr.sin_port = htons(port);
 	serveraddr.sin_addr.s_addr = INADDR_ANY;

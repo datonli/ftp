@@ -15,6 +15,6 @@
 #define MAXORDER 32
 
 void sendmsg2server(int sockfd,char * sendmsg);
-int dealorderPRT(char * port);
+int dealorderPRT(char * msg,char * portmsg);
 int connect2server(int sockfd,struct sockaddr_in addr,char * server_ip_address);
 char* getusefulmsg(char * ordermsg);
