@@ -41,12 +41,10 @@ LOOP:	printf("Please enter your order:\n");
 		preordermsg[3] = '\0';
 		if(strcmp(preordermsg,"PRT") == 0)
 		{
-		//	char * port = getusefulmsg(ordermsg);
 			datasockfd = dealorderPRT(ordermsg);	
 		}
 		else if(strcmp(preordermsg,"DIR") == 0)
 		{
-			sleep(3);
 			int recvnumbytes;
 			if((recvnumbytes = recv(ordersockfd , recvmsg, MAXLEN, 0)) == -1)
 		        {
@@ -84,15 +82,6 @@ void sendmsg2server(int sockfd,char * sendmsg)
                 exit(0);
         }
         printf("send msg is : %s \n",sendmsg);  
-}
-
-char* getusefulmsg(char * ordermsg)
-{
-	int msglen = strlen(ordermsg) - 4;
-	char usefulmsg[msglen + 1] ;
-	for(int i = 0; i < msglen ; i ++)
-		usefulmsg[i] = ordermsg[i+4];
-	return usefulmsg;
 }
 
 /*
@@ -134,7 +123,11 @@ int dealorderPRT(char * msg)
         int sockaddrlen = sizeof(clientaddr);
 	if((sockfd = accept(sockfd,(struct sockaddr *)&clientaddr,&sockaddrlen)) != -1)
 	{
-		printf("Connected by Host(IP is : %s)\n",inet_ntoa(clientaddr.sin_addr.s_addr));		
+		struct in_addr addr;
+                memcpy(&addr,&clientaddr.sin_addr.s_addr,4);
+                char * clientipaddr = inet_ntoa(addr);
+
+		printf("Connected by Host(IP is : %s)\n",clientipaddr);		
 	}
 	return sockfd;
 }
