@@ -15,7 +15,8 @@
 #define MAXORDER 32
 
 
-
+void dealorderDIR(int datasockfd,char * sendmsg);
+void dealorderGET(int datasockfd,char * ordermsg,char * sendmsg);
 char* getusefulmsg(char * ordermsg);
 int connect2client(int sockfd,struct sockaddr_in addr,char * clientaddr,char * port);
 int listen2client(int sockfd ,struct sockaddr_in clientaddr, struct sockaddr_in serveraddr);
