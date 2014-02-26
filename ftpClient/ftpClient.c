@@ -10,7 +10,7 @@
 char * serverport;
 int main(int argc,char * argv[])
 {
-	int ordersockfd,datasockfd ,status,bye = 0;
+	int ordersockfd,datasockfd ,fd,status,bye = 0;
         struct sockaddr_in serveraddr;
         struct sockaddr_in clientaddr;
         char sendmsg[MAXLEN];
@@ -51,7 +51,7 @@ LOOP:	printf("Please enter your order:\n");
 		else if(strcmp(ordermsg,"DIR") == 0)
 		{
 			int recvnumbytes;
-			if((recvnumbytes = recv(ordersockfd , recvmsg, MAXLEN, 0)) == -1)
+			if((recvnumbytes = recv(datasockfd , recvmsg, MAXLEN, 0)) == -1)
 		        {
                			printf("recv failed\n");
 		                exit(0);
@@ -60,7 +60,25 @@ LOOP:	printf("Please enter your order:\n");
 		}
 		else if(strcmp(ordermsg,"GET") == 0)
 		{
-
+			int recvnumbytes;
+			memset(recvmsg,0,strlen(recvmsg)+1);
+			if((recvnumbytes = recv(datasockfd , recvmsg, MAXLEN, 0)) == -1)
+                         {
+                                 printf("recv msg error\n");
+                         }
+			if((fd = open(arguemsg,O_WRONLY | O_CREAT)) == -1)
+                        {
+	                        printf("open file failed!\n");
+                                exit(0);
+                        }
+                        int writenumbytes;
+                        if((writenumbytes = write(fd,recvmsg,strlen(recvmsg))) == -1)
+                        {
+        	                printf("write file failed!\n");
+                                exit(0);
+                        }
+                        printf("writenumbytes is : %d\n",writenumbytes);
+                        close(fd);
 		}
 		else if(strcmp(ordermsg,"BYE") == 0)
 		{
