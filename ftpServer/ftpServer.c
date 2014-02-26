@@ -23,7 +23,7 @@ int main(int argc,char * argv[])
 	
 	printf("listenning...\n");
 	
-        if((newsockfd = accept(sockfd,(struct sockaddr *)&clientaddr,&sockaddrlen)) != -1)
+LOOP:   if((newsockfd = accept(sockfd,(struct sockaddr *)&clientaddr,&sockaddrlen)) != -1)
         {
 		if(pipe(pipefd) < 0)
 		{
@@ -35,7 +35,7 @@ int main(int argc,char * argv[])
                 int pid;
                 if((pid = fork()) > 0)
                 {
-			
+	/*		
                         if((recvnumbytes = recv(newsockfd , getmsg, MAXLEN, 0)) == -1)
                         {
                                 printf("recv msg error\n");
@@ -46,26 +46,30 @@ int main(int argc,char * argv[])
 			close(pipefd[0]);
 			int num = write(pipefd[1],getmsg,strlen(getmsg)+1);
 			printf("num is %d\n",num);
-                }
+        **/  
+			goto LOOP;
+	      }
                 else if(pid == 0)
                 {
 			char ordermsg[MAXORDER];
-                        /* int recvnumbytes ;
-                         if((recvnumbytes = recv(newsockfd , getmsg, MAXLEN, 0)) == -1)
+                         int recvnumbytes ;
+			sleep(5);
+LOOP_RECV:               if((recvnumbytes = recv(newsockfd , getmsg, MAXLEN, 0)) == -1)
                          {
                                  printf("recv msg error\n");
+				 goto LOOP_RECV;
                          }
-                         else
+                        /* else
                          {**/
 		//	printf("sleep 10 seconds\n");
-			sleep(5);      //等待接收了getmsg之后再进行触发！
+//			sleep(5);      //等待接收了getmsg之后再进行触发！
 		//	printf("sleep over\n");
-			 while(1){
+	//		 while(1){
 			//	if(recvnumbytes != -1){	
 				char preordermsg[4];
 				//char *ordermsg = getmsg;
 				close(pipefd[1]);
-				int num = read(pipefd[0],getmsg,MAXORDER);
+	//			int num = read(pipefd[0],getmsg,MAXORDER);
 		
 				//printf("num is %d\n",num);
 			if(strcmp(getmsg,ordermsg) != 0)
@@ -83,6 +87,7 @@ int main(int argc,char * argv[])
                 		//	char * port = getusefulmsg(ordermsg);
 					datasockfd = connect2client(newsockfd,clientaddr,clientipaddr,ordermsg);						
 					printf("PRT already done\n");
+					goto LOOP_RECV;
 				}
 		                else if(strcmp(preordermsg,"DIR") == 0)
                 		{
@@ -115,7 +120,7 @@ int main(int argc,char * argv[])
 						printf("rm temp failed\n");
 						exit(0);
 					}
-					
+					goto LOOP_RECV;				
                 		}	
 		                else if(strcmp(preordermsg,"GET") == 0)
                 		{
@@ -148,7 +153,7 @@ int main(int argc,char * argv[])
                                 close(fd);
 				**/
 		//	}
-			}
+	//		}
                         }
                 }
                 else
