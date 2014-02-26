@@ -32,6 +32,7 @@ LOOP:	printf("Please enter your order:\n");
         printf("3.GET filename\n");
         printf("4.BYE BYE\n");
 	
+	printf("Enter your order:\n");
 	while(bye != 1)
 	{	
 		scanf("%s %s",ordermsg,arguemsg);
@@ -51,6 +52,7 @@ LOOP:	printf("Please enter your order:\n");
 		else if(strcmp(ordermsg,"DIR") == 0)
 		{
 			int recvnumbytes;
+			memset(recvmsg,'\0',strlen(recvmsg));
 			if((recvnumbytes = recv(datasockfd , recvmsg, MAXLEN, 0)) == -1)
 		        {
                			printf("recv failed\n");
@@ -84,15 +86,18 @@ LOOP:	printf("Please enter your order:\n");
 		{
 			//all close()
 			bye = 1;
+			close(datasockfd);
+			close(ordersockfd);
 		}
 		else
 		{
 			printf("Wrong order!\n");
 			goto LOOP;
-		}		
-
-
-		printf("Enter your order:\n");
+		}	
+		if(bye != 1)
+		{	
+			printf("Enter your order:\n");
+		}
 	}
 }
 		
