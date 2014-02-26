@@ -7,7 +7,7 @@
  * */
 
 #include "ftpClient.h"
-
+char * serverport;
 int main(int argc,char * argv[])
 {
 	int ordersockfd,datasockfd ,status,bye = 0;
@@ -16,7 +16,8 @@ int main(int argc,char * argv[])
         char sendmsg[MAXLEN];
         char recvmsg[MAXLEN];
 	char ordermsg[MAXORDER];
-	if(argc != 2)
+	serverport = argv[2];
+	if(argc != 3)
 	{
 		printf("Wrong format!\nYou should type like that:\n    ./ftpClient.o server_ip_address\n");
 	}
@@ -45,7 +46,14 @@ LOOP:	printf("Please enter your order:\n");
 		}
 		else if(strcmp(preordermsg,"DIR") == 0)
 		{
-
+			sleep(3);
+			int recvnumbytes;
+			if((recvnumbytes = recv(ordersockfd , recvmsg, MAXLEN, 0)) == -1)
+		        {
+               			printf("recv failed\n");
+		                exit(0);
+		        }
+			printf("DIR is :\n%s\n",recvmsg);
 		}
 		else if(strcmp(preordermsg,"GET") == 0)
 		{
@@ -141,7 +149,8 @@ int connect2server(int sockfd,struct sockaddr_in addr,char * server_ip_address)
 
         bzero(&addr,sizeof(struct sockaddr));
         addr.sin_family = AF_INET;
-        addr.sin_port =htons(SERVERPORT);
+        //addr.sin_port =htons(SERVERPORT);
+        addr.sin_port =htons(atoi(serverport));
         addr.sin_addr.s_addr = inet_addr(server_ip_address);
         
         printf("Conneting to host (IP is : %s)\n",server_ip_address);

@@ -7,7 +7,7 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 
-#define SERVERPORT 8000
+#define SERVERPORT 8010
 #define MAXLEN 1024
 #define MAXORDER 32
 
